@@ -1,0 +1,6 @@
+@VANTHINGOCHANG_2123110352_HostAddress = http://localhost:5278
+
+GET {{VANTHINGOCHANG_2123110352_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
