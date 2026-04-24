@@ -50,8 +50,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
-    DbInitializer.Initialize(context);
+    try 
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        // Chỉ khởi tạo nếu có thể kết nối
+        if (context.Database.CanConnect())
+        {
+            DbInitializer.Initialize(context);
+        }
+        else 
+        {
+            Console.WriteLine("Warning: Could not connect to Database. Seeding skipped.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error during DB Initialization: {ex.Message}");
+        // Không quăng lỗi ra ngoài để tránh sập app trên Cloud
+    }
 }
 
 // Middleware

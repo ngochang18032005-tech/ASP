@@ -18,4 +18,18 @@ public class AppDbContext : DbContext
     public DbSet<MenuItem> MenuItems { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Customer> Customers { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Cấu hình độ chính xác cho các trường Decimal
+        foreach (var property in modelBuilder.Model.GetEntityTypes()
+            .SelectMany(t => t.GetProperties())
+            .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
+        {
+            property.SetPrecision(18);
+            property.SetScale(2);
+        }
+    }
 }
