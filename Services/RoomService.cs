@@ -1,4 +1,4 @@
-﻿using ASP.Data;
+using ASP.Data;
 using ASP.DTOs;
 using ASP.Models;
 using System.Linq;
@@ -34,6 +34,8 @@ public class RoomService
             {
                 Id = r.Id,
                 RoomNumber = r.RoomNumber,
+                RoomType = r.RoomType,
+                Price = r.Price,
                 Status = r.Status
             }).ToList();
 
@@ -58,6 +60,8 @@ public class RoomService
         var room = new Room
         {
             RoomNumber = dto.RoomNumber,
+            RoomType = dto.RoomType,
+            Price = dto.Price,
             Status = dto.Status
         };
 
@@ -74,6 +78,8 @@ public class RoomService
         if (room == null) return null;
 
         room.RoomNumber = dto.RoomNumber;
+        room.RoomType = dto.RoomType;
+        room.Price = dto.Price;
         room.Status = dto.Status;
 
         _context.SaveChanges();

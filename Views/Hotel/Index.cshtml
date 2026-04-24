@@ -76,6 +76,10 @@
 
   <!-- Tab Bookings -->
   <div class="tab-pane fade" id="bookings-pane" role="tabpanel">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-white mb-0">Quản Lý Đặt Phòng</h5>
+        <button class="btn btn-primary rounded-pill px-3" onclick="showAddBookingModal()"><i class="fa-solid fa-plus me-2"></i>Đặt Phòng Mới</button>
+    </div>
     <div class="glass-card section-card">
         <div class="table-responsive">
             <table class="table table-dark table-hover mb-0">
@@ -103,7 +107,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content glass-card border-0">
       <div class="modal-header border-bottom border-secondary">
-        <h5 class="modal-title text-white">Thêm Phòng Mới</h5>
+        <h5 class="modal-title text-white" id="modalTitle">Thêm Phòng Mới</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -125,6 +129,50 @@
       <div class="modal-footer border-top border-secondary">
         <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Hủy bỏ</button>
         <button type="button" class="btn btn-primary rounded-pill px-4" onclick="addRoom()">Hoàn tất</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Add Booking -->
+<div class="modal fade" id="addBookingModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card border-0">
+      <div class="modal-header border-bottom border-secondary">
+        <h5 class="modal-title text-white">Đặt Phòng Mới</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="frmAddBooking">
+            <div class="mb-3">
+                <label class="form-label text-muted">Tên Khách Hàng</label>
+                <input type="text" id="bookingName" class="form-control bg-transparent text-white border-secondary" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-muted">Số Điện Thoại</label>
+                <input type="text" id="bookingPhone" class="form-control bg-transparent text-white border-secondary" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label text-muted">Phòng</label>
+                <select id="bookingRoom" class="form-select bg-dark text-white border-secondary">
+                    <!-- Options loaded dynamically -->
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label class="form-label text-muted">Ngày Nhận</label>
+                    <input type="date" id="bookingCheckIn" class="form-control bg-transparent text-white border-secondary" required>
+                </div>
+                <div class="col-6 mb-3">
+                    <label class="form-label text-muted">Ngày Trả</label>
+                    <input type="date" id="bookingCheckOut" class="form-control bg-transparent text-white border-secondary" required>
+                </div>
+            </div>
+        </form>
+      </div>
+      <div class="modal-footer border-top border-secondary">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Hủy bỏ</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" onclick="createBooking()">Xác nhận đặt</button>
       </div>
     </div>
   </div>
@@ -165,7 +213,7 @@
             <div class="room-card ${cardClass}" style="position: relative;">
                 <div class="room-icon">${iconHtml}</div>
                 <h3 class="room-number">${room.roomNumber}</h3>
-                <p class="room-type">Phòng Khách Sạn</p>
+                <p class="room-type">${room.roomType || 'Standard'} - ${new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(room.price || 1500000)}</p>
                 <span class="badge-status ${badgeStyle}" ${extraBadgeCss}>${statusText}</span>
                 
                 <div class="room-actions mt-3 pt-2 border-top border-secondary d-flex justify-content-center gap-2">
@@ -202,7 +250,7 @@
         fetch('/api/rooms')
             .then(res => res.json())
             .then(res => {
-                const data = res.data || [];
+                const data = res.data?.data || [];
                 grid.innerHTML = '';
                 if(data.length === 0) {
                     grid.innerHTML = '<div class="col-12 text-muted">Chưa có phòng nào trong CSDL. Bấm thêm phòng nhé!</div>';
@@ -306,8 +354,83 @@
         if(!confirm('Xác nhận khách trả phòng và thanh toán?')) return;
         fetch(`/api/bookings/${id}/checkout`, { method: 'PUT' })
             .then(res => {
-                if(res.ok) loadBookings();
+                if(res.ok) {
+                    loadBookings();
+                    loadRooms();
+                }
             });
+    }
+
+    function showAddBookingModal() {
+        // Load available rooms into select
+        fetch('/api/rooms')
+            .then(res => res.json())
+            .then(res => {
+                const data = res.data?.data || [];
+                const select = document.getElementById('bookingRoom');
+                select.innerHTML = '';
+                const availableRooms = data.filter(r => r.status === 'Trống' || r.status === 'AVAILABLE');
+                if(availableRooms.length === 0) {
+                    select.innerHTML = '<option value="">Không có phòng trống</option>';
+                } else {
+                    availableRooms.forEach(r => {
+                        select.insertAdjacentHTML('beforeend', `<option value="${r.id}">Phòng ${r.roomNumber} (${r.roomType}) - ${new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(r.price)}</option>`);
+                    });
+                }
+            });
+        
+        document.getElementById('frmAddBooking').reset();
+        
+        // Set default dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        document.getElementById('bookingCheckIn').valueAsDate = today;
+        document.getElementById('bookingCheckOut').valueAsDate = tomorrow;
+
+        new bootstrap.Modal(document.getElementById('addBookingModal')).show();
+    }
+
+    function createBooking() {
+        const name = document.getElementById('bookingName').value;
+        const phone = document.getElementById('bookingPhone').value;
+        const roomId = document.getElementById('bookingRoom').value;
+        const checkIn = document.getElementById('bookingCheckIn').value;
+        const checkOut = document.getElementById('bookingCheckOut').value;
+
+        if(!name || !phone || !roomId || !checkIn || !checkOut) {
+            alert('Vui lòng điền đầy đủ thông tin.');
+            return;
+        }
+
+        const data = {
+            customerName: name,
+            customerPhone: phone,
+            roomId: parseInt(roomId),
+            checkIn: checkIn,
+            checkOut: checkOut,
+            status: 'PENDING'
+        };
+
+        fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => {
+            if(!res.ok) return res.text().then(text => { throw new Error(text) });
+            return res.json();
+        })
+        .then(data => {
+            bootstrap.Modal.getInstance(document.getElementById('addBookingModal')).hide();
+            loadBookings();
+            loadRooms(); // Refresh rooms to update status
+            alert('Đặt phòng thành công!');
+        })
+        .catch(err => {
+            alert('Lỗi đặt phòng: ' + err.message);
+        });
     }
 </script>
 }

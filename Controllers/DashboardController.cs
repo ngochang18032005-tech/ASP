@@ -2,8 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using ASP.Data;
 using System.Linq;
 
+using Microsoft.AspNetCore.Authorization;
+
+using Microsoft.EntityFrameworkCore;
+
 namespace ASP.Controllers;
 
+[Authorize]
 public class DashboardController : Controller
 {
     private readonly AppDbContext _context;
@@ -29,5 +34,13 @@ public class DashboardController : Controller
         ViewBag.PendingOrders = _context.Bookings.Count(b => b.Status == "CONFIRMED");
 
         return View();
+    }
+
+    public IActionResult Bookings()
+    {
+        var bookings = _context.Bookings
+            .Include(b => b.Room)
+            .ToList();
+        return View(bookings);
     }
 }

@@ -29,6 +29,12 @@
             <ul class="nav-links">
                 <li class="nav-label">Main Menu</li>
                 <li>
+                    <a asp-controller="Dashboard" asp-action="Bookings" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Bookings" ? "active" : "")" style="background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37; margin-bottom: 5px;">
+                        <i class="fa-solid fa-calendar-check" style="color: #d4af37;"></i>
+                        <span style="font-weight: bold; color: #d4af37;">QUẢN LÝ ĐẶT PHÒNG</span>
+                    </a>
+                </li>
+                <li>
                     <a asp-controller="Dashboard" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
                         <i class="fa-solid fa-chart-pie"></i>
                         <span>Tổng Quan</span>
@@ -60,9 +66,21 @@
                 </li>
                 <li class="nav-label">Management</li>
                 <li>
-                    <a asp-controller="Employee" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Employee" ? "active" : "")">
+                    <a asp-controller="Employee" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Employee" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
                         <i class="fa-solid fa-users"></i>
                         <span>Nhân Viên</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Employee" asp-action="Customers" class="@(ViewContext.RouteData.Values["Controller"]?.ToString() == "Employee" && ViewContext.RouteData.Values["Action"]?.ToString() == "Customers" ? "active" : "")">
+                        <i class="fa-solid fa-address-book"></i>
+                        <span>Khách Hàng</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-controller="Dashboard" asp-action="Bookings" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Bookings" ? "active" : "")">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Đặt Phòng</span>
                     </a>
                 </li>
                 <li>
@@ -91,7 +109,15 @@
                     <input type="text" placeholder="Tìm kiếm nhanh..." />
                 </div>
                 <div class="topbar-actions">
-                    <button class="action-btn"><i class="fa-regular fa-bell"></i><span class="badge">3</span></button>
+                    <div class="dropdown">
+                        <button class="action-btn position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="notificationBtn">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="badge position-absolute top-0 start-100 translate-middle bg-danger rounded-circle" id="notificationBadge" style="display:none;">0</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end glass-panel border-0 shadow-lg p-2 mt-2" style="width: 300px;" id="notificationList">
+                            <li class="p-2 text-center text-muted small">Không có thông báo mới</li>
+                        </ul>
+                    </div>
                     <a href="/" class="action-btn" title="Đi tới Trang chủ Website"><i class="fa-solid fa-globe"></i></a>
                 </div>
             </header>
@@ -107,5 +133,94 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let lastBookingId = 0;
+        let unreadCount = 0;
+
+        async function initNotification() {
+            try {
+                const response = await fetch('/api/bookings/latest');
+                const data = await response.json();
+                if (data) lastBookingId = data.id;
+                updateNotificationList();
+            } catch (e) {}
+            
+            setInterval(checkNewBookings, 10000);
+        }
+
+        async function updateNotificationList() {
+            try {
+                const response = await fetch('/api/bookings/recent');
+                const list = await response.json();
+                const container = document.getElementById('notificationList');
+                
+                if (list && list.length > 0) {
+                    container.innerHTML = '<li class="p-2 border-bottom fw-bold">Thông báo mới nhất</li>';
+                    list.forEach(b => {
+                        const time = new Date(b.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        container.innerHTML += `
+                            <li>
+                                <a class="dropdown-item p-3 border-bottom d-flex align-items-center" href="/Dashboard/Bookings">
+                                    <div class="me-3">
+                                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fa-solid fa-calendar-check text-dark"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">#${b.id} - ${b.customerName}</div>
+                                        <div class="small text-muted">Vừa đặt phòng lúc ${time}</div>
+                                    </div>
+                                </a>
+                            </li>`;
+                    });
+                    container.innerHTML += '<li class="text-center p-2"><a href="/Dashboard/Bookings" class="small text-warning text-decoration-none">Xem tất cả</a></li>';
+                }
+            } catch (e) {}
+        }
+
+        async function checkNewBookings() {
+            try {
+                const response = await fetch('/api/bookings/latest');
+                const data = await response.json();
+                
+                if (data && data.id > lastBookingId) {
+                    lastBookingId = data.id;
+                    unreadCount++;
+                    
+                    // Cập nhật Badge
+                    const badge = document.getElementById('notificationBadge');
+                    badge.innerText = unreadCount;
+                    badge.style.display = 'block';
+
+                    // Cập nhật danh sách
+                    updateNotificationList();
+                    
+                    // Toast thông báo
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 5000,
+                        timerProgressBar: true
+                    });
+
+                    Toast.fire({
+                        icon: 'info',
+                        title: 'Có đơn đặt phòng mới!',
+                        text: `Khách hàng: ${data.customerName} vừa đặt phòng.`
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // Xóa số thông báo khi bấm vào chuông
+        document.getElementById('notificationBtn').addEventListener('click', () => {
+            unreadCount = 0;
+            document.getElementById('notificationBadge').style.display = 'none';
+        });
+
+        document.addEventListener('DOMContentLoaded', initNotification);
+    </script>
 </body>
 </html>

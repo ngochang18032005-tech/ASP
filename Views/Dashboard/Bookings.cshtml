@@ -1,0 +1,121 @@
+@model IEnumerable<ASP.Models.Booking>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid px-4 py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold"><i class="fa-solid fa-calendar-check me-2 text-warning"></i>Quản lý Đặt phòng</h2>
+        <span class="badge bg-dark">Tổng cộng: @Model.Count() đơn</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Mã đơn</th>
+                            <th>Ngày đặt</th>
+                            <th>Khách hàng</th>
+                            <th>Phòng</th>
+                            <th>Ngày đến/đi</th>
+                            <th>Tiền cọc</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderByDescending(b => b.Id))
+                        {
+                            <tr>
+                                <td class="ps-4 fw-bold">#@item.Id</td>
+                                <td>
+                                    <div class="small fw-bold text-dark">@item.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    <div class="small text-muted">@item.CreatedAt.ToString("HH:mm")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@item.CustomerName</div>
+                                    <div class="small text-muted">@item.CustomerPhone</div>
+                                    <div class="small text-muted">@item.CustomerEmail</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-dark">Phòng @item.Room?.RoomNumber</span>
+                                    <div class="small text-muted">@item.Room?.RoomType</div>
+                                </td>
+                                <td>
+                                    <div class="small text-muted">Từ: @item.CheckIn.ToString("dd/MM/yyyy")</div>
+                                    <div class="small text-muted">Đến: @item.CheckOut.ToString("dd/MM/yyyy")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-success">@item.DepositAmount.ToString("N0") VNĐ</div>
+                                    <div class="small text-muted">(@item.DepositPercentage%)</div>
+                                </td>
+                                <td>
+                                    @if (item.IsDepositPaid)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3">Đã cọc tiền</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3">Chưa cọc</span>
+                                    }
+                                    <div class="small mt-1 text-muted">@item.Status</div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    @if (!item.IsDepositPaid)
+                                    {
+                                        <button onclick="confirmDeposit(@item.Id)" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                                            <i class="fa-solid fa-check me-1"></i> Xác nhận cọc
+                                        </button>
+                                    }
+                                    @if (item.Status == "DEPOSIT_PAID" || item.Status == "PENDING_PAYMENT")
+                                    {
+                                        <button onclick="checkIn(@item.Id)" class="btn btn-sm btn-dark rounded-pill px-3 ms-2">
+                                            Nhận phòng
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        async function confirmDeposit(id) {
+            const result = await Swal.fire({
+                title: 'Xác nhận tiền cọc?',
+                text: "Bạn xác nhận đã nhận được tiền cọc của đơn hàng này?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#198754',
+                confirmButtonText: 'Đã nhận tiền',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/api/bookings/${id}/confirm-deposit`, { method: 'PUT' });
+                    if (response.ok) {
+                        Swal.fire('Thành công!', 'Đã xác nhận tiền cọc.', 'success').then(() => location.reload());
+                    }
+                } catch (e) { console.error(e); }
+            }
+        }
+
+        async function checkIn(id) {
+            try {
+                const response = await fetch(`/api/bookings/${id}/checkin`, { method: 'PUT' });
+                if (response.ok) {
+                    Swal.fire('Đã nhận phòng!', 'Trạng thái phòng đã chuyển sang Có khách.', 'success').then(() => location.reload());
+                }
+            } catch (e) { console.error(e); }
+        }
+    </script>
+}

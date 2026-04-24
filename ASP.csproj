@@ -12,4 +12,26 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Models\Attendance.cs" />
+    <Compile Remove="Models\AuditLog.cs" />
+    <Compile Remove="Models\Bonus.cs" />
+    <Compile Remove="Models\Branch.cs" />
+    <Compile Remove="Models\Department.cs" />
+    <Compile Remove="Models\Overtime.cs" />
+    <Compile Remove="Models\Penalty.cs" />
+    <Compile Remove="Models\Position.cs" />
+    <Compile Remove="Models\Salary.cs" />
+    <Compile Remove="Models\Shift.cs" />
+    <Compile Remove="Models\ShiftAssignment.cs" />
+    <Compile Remove="Controllers\AttendanceController.cs" />
+    <Compile Remove="Controllers\BranchController.cs" />
+    <Compile Remove="Controllers\DepartmentsController.cs" />
+    <Compile Remove="Controllers\PositionsController.cs" />
+    <Compile Remove="Controllers\SalaryController.cs" />
+    <Compile Remove="Controllers\ShiftsController.cs" />
+    <Compile Remove="Migrations\**\*.cs" />
+    <Compile Remove="WeatherForecast.cs" />
+  </ItemGroup>
+
 </Project>

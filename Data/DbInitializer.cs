@@ -18,15 +18,56 @@ namespace ASP.Data
                 string[] statuses = { "Trống", "Có khách", "Đang dọn" };
                 Random rnd = new Random();
 
-                for (int i = 1; i <= 30; i++)
+                // Standard Rooms
+                for (int i = 1; i <= 10; i++)
                 {
-                    rooms.Add(new Room
-                    {
-                        RoomNumber = (100 + i).ToString(),
-                        Status = statuses[rnd.Next(statuses.Length)]
-                    });
+                    rooms.Add(new Room { RoomNumber = $"1{i:D2}", RoomType = "Standard", Price = 1500000, Status = statuses[rnd.Next(statuses.Length)] });
                 }
+                // Superior Rooms
+                for (int i = 11; i <= 20; i++)
+                {
+                    rooms.Add(new Room { RoomNumber = $"1{i:D2}", RoomType = "Superior", Price = 2000000, Status = statuses[rnd.Next(statuses.Length)] });
+                }
+                // Deluxe Rooms
+                for (int i = 1; i <= 8; i++)
+                {
+                    rooms.Add(new Room { RoomNumber = $"2{i:D2}", RoomType = "Deluxe", Price = 2500000, Status = statuses[rnd.Next(statuses.Length)] });
+                }
+                // Ocean View
+                for (int i = 9; i <= 14; i++)
+                {
+                    rooms.Add(new Room { RoomNumber = $"2{i:D2}", RoomType = "Ocean View", Price = 3500000, Status = statuses[rnd.Next(statuses.Length)] });
+                }
+                // Family Suite
+                for (int i = 1; i <= 4; i++)
+                {
+                    rooms.Add(new Room { RoomNumber = $"3{i:D2}", RoomType = "Family Suite", Price = 4000000, Status = statuses[rnd.Next(statuses.Length)] });
+                }
+                // Executive Suite
+                for (int i = 5; i <= 8; i++)
+                {
+                    rooms.Add(new Room { RoomNumber = $"3{i:D2}", RoomType = "Executive Suite", Price = 5500000, Status = statuses[rnd.Next(statuses.Length)] });
+                }
+                // Penthouse
+                rooms.Add(new Room { RoomNumber = "PH-01", RoomType = "Penthouse", Price = 10000000, Status = statuses[rnd.Next(statuses.Length)] });
+                rooms.Add(new Room { RoomNumber = "PH-02", RoomType = "Penthouse", Price = 10000000, Status = statuses[rnd.Next(statuses.Length)] });
+                
+                // Presidential Room
+                rooms.Add(new Room { RoomNumber = "VIP-999", RoomType = "Presidential Suite", Price = 20000000, Status = statuses[rnd.Next(statuses.Length)] });
+
                 context.Rooms.AddRange(rooms);
+            }
+
+            // 1.5 Seed Users (Authentication)
+            if (!context.Users.Any())
+            {
+                context.Users.Add(new User 
+                {
+                    Username = "admin",
+                    Password = "password123",
+                    Role = "ADMIN"
+                });
+                context.SaveChanges();
             }
 
             // 2. Seed Employees
@@ -90,14 +131,22 @@ namespace ASP.Data
             // 5. Seed Initial Bookings
             if (!context.Bookings.Any())
             {
-                context.Bookings.Add(new Booking {
-                    RoomId = 1,
-                    CustomerName = "Nguyễn Văn A",
-                    CustomerPhone = "0987654321",
-                    CheckIn = DateTime.Now.AddDays(-1),
-                    CheckOut = DateTime.Now.AddDays(2),
-                    Status = "PENDING"
-                });
+                var firstRoom = context.Rooms.FirstOrDefault();
+                if (firstRoom != null) 
+                {
+                    context.Bookings.Add(new Booking {
+                        RoomId = firstRoom.Id,
+                        CustomerName = "Nguyễn Văn A",
+                        CustomerPhone = "0987654321",
+                        CustomerEmail = "khachhang@gmail.com",
+                        CheckIn = DateTime.Now.AddDays(-1),
+                        CheckOut = DateTime.Now.AddDays(2),
+                        TotalAmount = firstRoom.Price * 3,
+                        DepositAmount = firstRoom.Price * 3 * 0.3m,
+                        DepositPercentage = 30,
+                        Status = "PENDING_PAYMENT"
+                    });
+                }
             }
 
             context.SaveChanges();

@@ -36,7 +36,7 @@
     border-radius: 16px;
     display: flex;
     gap: 16px;
-    max-width: 900px;
+    max-width: 1350px;
     margin: 0 auto;
 }
 
@@ -120,24 +120,48 @@
         <p>Khu nghỉ dưỡng & Spa tiêu chuẩn 5 sao đẳng cấp quốc tế</p>
         
         <div class="booking-widget">
-            <div class="booking-input" style="flex: 1.5;">
+            <div class="booking-input" style="flex: 1.2;">
                 <label>Nhận phòng</label>
-                <input type="date" id="checkinDate" value="2026-04-18" />
+                <input type="date" id="checkinDate" onchange="updateRoomDetails()" />
+            </div>
+            <div class="booking-input" style="flex: 1.2;">
+                <label>Trả phòng</label>
+                <input type="date" id="checkoutDate" onchange="updateRoomDetails()" />
+            </div>
+            <div class="booking-input" style="flex: 1.4;">
+                <label>Loại phòng</label>
+                <select id="roomTypeSelect" onchange="filterRoomsByType()">
+                    <option value="" style="color: black;">Tất cả</option>
+                </select>
+            </div>
+            <div class="booking-input" style="flex: 1.2;">
+                <label>Phòng</label>
+                <select id="bookingRoom" onchange="updateRoomDetails()">
+                    <option value="" style="color: black;">Đang tải...</option>
+                </select>
+            </div>
+            <div class="booking-input" style="flex: 1.4;">
+                <label>Tổng tiền</label>
+                <input type="text" id="roomPriceDisplay" readonly placeholder="-" style="color: var(--success); font-weight: bold;" />
+                <div id="bookingSummary" class="mt-2" style="font-size: 0.75rem;">
+                    <span id="nightsDisplay" class="text-white-50 d-block"></span>
+                    <span id="depositDisplay" class="text-warning fw-bold d-block"></span>
+                </div>
             </div>
             <div class="booking-input" style="flex: 1.5;">
-                <label>Trả phòng</label>
-                <input type="date" id="checkoutDate" value="2026-04-20" />
-            </div>
-            <div class="booking-input" style="flex: 2;">
                 <label>Họ tên</label>
                 <input type="text" id="guestName" placeholder="Tên của bạn..." />
             </div>
-            <div class="booking-input" style="flex: 2;">
-                <label>Số điện thoại</label>
+            <div class="booking-input" style="flex: 1.2;">
+                <label>SĐT</label>
                 <input type="tel" id="guestPhone" placeholder="090..." />
             </div>
+            <div class="booking-input" style="flex: 1.5;">
+                <label>Email</label>
+                <input type="email" id="guestEmail" placeholder="email@example.com" />
+            </div>
             <div class="d-flex align-items-end ms-2">
-                <button type="button" onclick="handleBooking()" class="btn btn-warning px-4 py-2 fw-bold text-uppercase h-100 shadow rounded-3">Kiểm tra giá</button>
+                <button type="button" onclick="handleBooking()" class="btn btn-warning px-4 py-2 fw-bold text-uppercase h-100 shadow rounded-3">Đặt Ngay</button>
             </div>
         </div>
     </div>
@@ -199,17 +223,98 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    let allAvailableRooms = [];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Load available rooms for public booking
+        fetch('/api/rooms?pageSize=100')
+            .then(res => res.json())
+            .then(res => {
+                const data = res.data?.data || [];
+                allAvailableRooms = data.filter(r => r.status === 'Trống' || r.status === 'AVAILABLE');
+                
+                // Populate Room Types
+                const types = [...new Set(allAvailableRooms.map(r => r.roomType).filter(Boolean))];
+                const typeSelect = document.getElementById('roomTypeSelect');
+                typeSelect.innerHTML = '<option value="" style="color: black;">Tất cả</option>';
+                types.forEach(t => {
+                    typeSelect.insertAdjacentHTML('beforeend', `<option value="${t}" style="color: black;">${t}</option>`);
+                });
+
+                filterRoomsByType(); // Initialize room list
+            })
+            .catch(err => {
+                document.getElementById('bookingRoom').innerHTML = '<option value="" style="color: black;">Lỗi tải phòng</option>';
+            });
+            
+        // Set default dates
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        document.getElementById('checkinDate').valueAsDate = today;
+        document.getElementById('checkoutDate').valueAsDate = tomorrow;
+    });
+
+    function filterRoomsByType() {
+        const selectedType = document.getElementById('roomTypeSelect').value;
+        const roomSelect = document.getElementById('bookingRoom');
+        roomSelect.innerHTML = '';
+        
+        const filteredRooms = selectedType 
+            ? allAvailableRooms.filter(r => r.roomType === selectedType)
+            : allAvailableRooms;
+
+        if(filteredRooms.length === 0) {
+            roomSelect.innerHTML = '<option value="" style="color: black;">Hết phòng</option>';
+        } else {
+            filteredRooms.forEach(r => {
+                const priceFmt = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(r.price);
+                roomSelect.insertAdjacentHTML('beforeend', `<option value="${r.id}" data-raw-price="${r.price}" data-type="${r.roomType}" data-price="${priceFmt}" style="color: black;">Phòng ${r.roomNumber}</option>`);
+            });
+        }
+        updateRoomDetails();
+    }
+
+    function updateRoomDetails() {
+        const select = document.getElementById('bookingRoom');
+        const option = select.options[select.selectedIndex];
+        const checkin = new Date(document.getElementById('checkinDate').value);
+        const checkout = new Date(document.getElementById('checkoutDate').value);
+        
+        if (option && option.value && checkin && checkout && checkout > checkin) {
+            const rawPrice = parseFloat(option.getAttribute('data-raw-price'));
+            const nights = Math.ceil((checkout - checkin) / (1000 * 60 * 60 * 24));
+            const totalPrice = rawPrice * nights;
+            const deposit = totalPrice * 0.3; // 30% deposit
+
+            const fmt = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'});
+            const rawPriceFmt = fmt.format(rawPrice);
+            
+            document.getElementById('roomPriceDisplay').value = fmt.format(totalPrice);
+            document.getElementById('nightsDisplay').innerText = `${nights} đêm x ${rawPriceFmt}`;
+            document.getElementById('depositDisplay').innerText = `Tiền cọc (30%): ${fmt.format(deposit)}`;
+            document.getElementById('depositDisplay').dataset.value = deposit;
+        } else {
+            document.getElementById('roomPriceDisplay').value = '';
+            document.getElementById('nightsDisplay').innerText = '';
+            document.getElementById('depositDisplay').innerText = '';
+        }
+    }
+
     async function handleBooking() {
             const checkin = document.getElementById('checkinDate').value;
             const checkout = document.getElementById('checkoutDate').value;
+            const roomId = document.getElementById('bookingRoom').value;
             const guestName = document.getElementById('guestName').value;
             const guestPhone = document.getElementById('guestPhone').value;
+            const guestEmail = document.getElementById('guestEmail').value;
 
-            if (!checkin || !checkout || !guestName || !guestPhone) {
+            if (!checkin || !checkout || !guestName || !guestPhone || !guestEmail || !roomId) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Thiếu thông tin',
-                    text: 'Vui lòng nhập đầy đủ ngày và thông tin liên hệ!',
+                    text: 'Vui lòng nhập đầy đủ ngày, chọn phòng và thông tin liên hệ (bao gồm email)!',
                     background: '#1a1a1a',
                     color: '#fff'
                 });
@@ -218,7 +323,7 @@
 
             // Simulate booking request
             const loadingSwal = Swal.fire({
-                title: 'Đang kiểm tra phòng trống...',
+                title: 'Đang gửi yêu cầu...',
                 allowOutsideClick: false,
                 background: '#1a1a1a',
                 color: '#fff',
@@ -232,27 +337,24 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        roomId: 1, // Defaulting to room 1 for POC
+                        roomId: parseInt(roomId),
                         checkIn: checkin,
                         checkOut: checkout,
                         customerName: guestName,
                         customerPhone: guestPhone,
-                        status: 'PENDING'
+                        customerEmail: guestEmail,
+                        totalAmount: parseFloat(document.getElementById('roomPriceDisplay').value.replace(/[^0-9]/g, '')),
+                        depositAmount: parseFloat(document.getElementById('depositDisplay').dataset.value || 0),
+                        status: 'PENDING_PAYMENT'
                     })
                 });
+
+                const booking = await response.json();
 
             setTimeout(() => {
                 Swal.close();
                 if (response.ok) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Đặt chỗ thành công!',
-                        text: 'Cảm ơn bạn đã tin tưởng LuxManage. Chúng tôi sẽ liên hệ sớm nhất!',
-                        timer: 3000,
-                        background: '#1a1a1a',
-                        color: '#fff',
-                        showConfirmButton: false
-                    });
+                    window.location.href = `/Booking/Payment/${booking.id}`;
                 } else {
                     Swal.fire({
                         icon: 'info',

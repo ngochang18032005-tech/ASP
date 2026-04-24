@@ -9,7 +9,9 @@ D:\ASP.NET\ASP\bin\Debug\net8.0\ASP.dll
 D:\ASP.NET\ASP\bin\Debug\net8.0\ASP.pdb
 D:\ASP.NET\ASP\bin\Debug\net8.0\Azure.Core.dll
 D:\ASP.NET\ASP\bin\Debug\net8.0\Azure.Identity.dll
+D:\ASP.NET\ASP\bin\Debug\net8.0\BCrypt.Net-Next.dll
 D:\ASP.NET\ASP\bin\Debug\net8.0\Humanizer.dll
+D:\ASP.NET\ASP\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 D:\ASP.NET\ASP\bin\Debug\net8.0\Microsoft.Bcl.AsyncInterfaces.dll
 D:\ASP.NET\ASP\bin\Debug\net8.0\Microsoft.CodeAnalysis.dll
 D:\ASP.NET\ASP\bin\Debug\net8.0\Microsoft.CodeAnalysis.CSharp.dll
@@ -125,6 +127,7 @@ D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.MvcApplicationPartsAssemblyInfo.cs
 D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.MvcApplicationPartsAssemblyInfo.cache
 D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.RazorAssemblyInfo.cache
 D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.RazorAssemblyInfo.cs
+D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.sourcelink.json
 D:\ASP.NET\ASP\obj\Debug\net8.0\rjimswa.dswa.cache.json
 D:\ASP.NET\ASP\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 D:\ASP.NET\ASP\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -141,6 +144,3 @@ D:\ASP.NET\ASP\obj\Debug\net8.0\refint\ASP.dll
 D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.pdb
 D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.genruntimeconfig.cache
 D:\ASP.NET\ASP\obj\Debug\net8.0\ref\ASP.dll
-D:\ASP.NET\ASP\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
-D:\ASP.NET\ASP\bin\Debug\net8.0\BCrypt.Net-Next.dll
-D:\ASP.NET\ASP\obj\Debug\net8.0\ASP.sourcelink.json

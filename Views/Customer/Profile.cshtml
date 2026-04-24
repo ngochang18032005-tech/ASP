@@ -1,0 +1,175 @@
+@model ASP.Models.Customer
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+}
+
+<section class="py-5 mt-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="row g-0">
+                        <div class="col-md-4 bg-warning d-flex flex-column align-items-center justify-content-center p-5 text-dark">
+                            <div class="rounded-circle bg-white p-3 mb-3 shadow-sm">
+                                <i class="fa-solid fa-user-gear fa-4x text-warning"></i>
+                            </div>
+                            <h3 class="fw-bold text-center mb-0">Hồ Sơ</h3>
+                            <p class="text-center opacity-75">Thành viên LuxManage</p>
+                        </div>
+                        <div class="col-md-8 p-5">
+                            <h2 class="mb-4 fw-bold logo-font">Chỉnh sửa thông tin</h2>
+
+                            @if (ViewBag.Error != null)
+                            {
+                                <div class="alert alert-danger border-0 rounded-3 mb-4">
+                                    <i class="fa-solid fa-circle-exclamation me-2"></i> @ViewBag.Error
+                                </div>
+                            }
+                            @if (ViewBag.Success != null)
+                            {
+                                <div class="alert alert-success border-0 rounded-3 mb-4">
+                                    <i class="fa-solid fa-circle-check me-2"></i> @ViewBag.Success
+                                </div>
+                            }
+
+                            <form asp-action="Profile" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted small text-uppercase">Họ và tên</label>
+                                    <input type="text" name="fullName" class="form-control form-control-lg bg-light border-0 rounded-3" value="@Model.FullName" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted small text-uppercase">Email (Không thể thay đổi)</label>
+                                    <input type="email" class="form-control form-control-lg bg-light border-0 rounded-3" value="@Model.Email" readonly disabled>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold text-muted small text-uppercase">Số điện thoại</label>
+                                    <input type="text" name="phone" class="form-control form-control-lg bg-light border-0 rounded-3" value="@Model.Phone" required>
+                                </div>
+
+                                <hr class="my-4 opacity-10">
+                                <h5 class="mb-3 fw-bold"><i class="fa-solid fa-key me-2 text-warning"></i>Thay đổi mật khẩu (Để trống nếu không đổi)</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-muted small text-uppercase">Mật khẩu hiện tại</label>
+                                        <input type="password" name="currentPassword" class="form-control form-control-lg bg-light border-0 rounded-3">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold text-muted small text-uppercase">Mật khẩu mới</label>
+                                        <input type="password" name="newPassword" class="form-control form-control-lg bg-light border-0 rounded-3">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <button type="submit" class="btn btn-warning btn-lg w-100 rounded-pill fw-bold text-uppercase shadow-sm">
+                                        <i class="fa-solid fa-save me-2"></i> Lưu thay đổi
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Lịch sử đặt phòng *@
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-10">
+                <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="card-header bg-dark text-white p-4">
+                        <h4 class="mb-0 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-warning"></i>Lịch sử đặt phòng</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-4">Mã đơn</th>
+                                        <th>Ngày đặt</th>
+                                        <th>Phòng</th>
+                                        <th>Ngày nhận/trả</th>
+                                        <th>Tổng tiền</th>
+                                        <th>Tiền cọc</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var bookings = ViewBag.Bookings as List<ASP.Models.Booking>;
+                                    }
+                                    @if (bookings != null && bookings.Any())
+                                    {
+                                        foreach (var b in bookings)
+                                        {
+                                            <tr>
+                                                <td class="ps-4 fw-bold">#@b.Id</td>
+                                                <td>
+                                                    <div class="small">@b.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                                    <div class="small text-muted">@b.CreatedAt.ToString("HH:mm")</div>
+                                                </td>
+                                                <td>
+                                                    <div class="fw-bold">Phòng @b.Room?.RoomNumber</div>
+                                                    <div class="small text-muted">@b.Room?.RoomType</div>
+                                                </td>
+                                                <td>
+                                                    <div class="small">@b.CheckIn.ToString("dd/MM/yyyy") - @b.CheckOut.ToString("dd/MM/yyyy")</div>
+                                                </td>
+                                                <td class="fw-bold">@b.TotalAmount.ToString("N0")đ</td>
+                                                <td>
+                                                    @if (b.IsDepositPaid)
+                                                    {
+                                                        <span class="text-success fw-bold">@b.DepositAmount.ToString("N0")đ</span>
+                                                        <div class="small text-success">Đã cọc</div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-warning">@b.DepositAmount.ToString("N0")đ</span>
+                                                        <div class="small text-muted">Chờ thanh toán</div>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @switch (b.Status)
+                                                    {
+                                                        case "DEPOSIT_PAID":
+                                                            <span class="badge bg-success rounded-pill px-3">Đã đặt cọc</span>
+                                                            break;
+                                                        case "PENDING_PAYMENT":
+                                                            <span class="badge bg-warning text-dark rounded-pill px-3">Chờ cọc</span>
+                                                            break;
+                                                        case "CHECKED_IN":
+                                                            <span class="badge bg-info text-dark rounded-pill px-3">Đã nhận phòng</span>
+                                                            break;
+                                                        case "CHECKED_OUT":
+                                                            <span class="badge bg-secondary rounded-pill px-3">Hoàn tất</span>
+                                                            break;
+                                                        default:
+                                                            <span class="badge bg-light text-dark rounded-pill px-3 border">@b.Status</span>
+                                                            break;
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="6" class="text-center py-5 text-muted">
+                                                <i class="fa-solid fa-calendar-xmark fa-3x mb-3 d-block opacity-25"></i>
+                                                Bạn chưa có lịch sử đặt phòng nào.
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .bg-light { background-color: #f8f9fa !important; }
+    .form-control:focus { background-color: #fff !important; box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25); border-color: #ffc107; }
+</style>

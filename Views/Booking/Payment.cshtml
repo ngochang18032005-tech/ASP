@@ -1,0 +1,194 @@
+@model ASP.Models.Booking
+@{
+    Layout = null;
+    var roomPrice = Model.Room?.Price ?? 0;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Thanh Toán - LuxManage Resort</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #f8fafc; color: #1e293b; }
+        .payment-container { max-width: 900px; margin: 60px auto; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 15px 30px rgba(0,0,0,0.05); overflow: hidden; }
+        .header-accent { background: linear-gradient(135deg, #d4af37, #b8962e); color: white; padding: 40px; text-align: center; }
+        .option-card { border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .option-card:hover { border-color: #d4af37; background: #fffdf5; transform: translateY(-5px); }
+        .option-card.active { border-color: #d4af37; background: #fffdf5; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.1); }
+        .option-card.active::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 15px; right: 15px; color: #d4af37; font-size: 1.2rem; }
+        .btn-confirm { background: #d4af37; color: white; border: none; border-radius: 12px; padding: 16px; font-weight: 700; width: 100%; transition: all 0.3s; }
+        .btn-confirm:hover { background: #b8962e; transform: scale(1.02); }
+        .qr-section { display: none; text-align: center; padding: 30px; background: #f8fafc; border-radius: 16px; margin-top: 20px; }
+        .price-badge { background: #f1f5f9; padding: 4px 12px; border-radius: 99px; font-size: 0.9rem; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container payment-container">
+        <div class="card">
+            <div class="header-accent">
+                <h2 class="fw-bold mb-1">Thanh toán đặt phòng</h2>
+                <p class="opacity-75 mb-0">Mã đơn đăng ký: #@Model.Id</p>
+            </div>
+            
+            <div class="p-5">
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <h5 class="fw-bold mb-3">Thông tin khách hàng</h5>
+                        <p class="mb-1 text-muted">Họ tên: <span class="text-dark fw-medium">@Model.CustomerName</span></p>
+                        <p class="mb-1 text-muted">Email: <span class="text-dark fw-medium">@Model.CustomerEmail</span></p>
+                        <p class="mb-0 text-muted">SĐT: <span class="text-dark fw-medium">@Model.CustomerPhone</span></p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h5 class="fw-bold mb-3">Chi tiết phòng</h5>
+                        <p class="mb-1 text-muted">Phòng: <span class="text-dark fw-medium">@Model.Room?.RoomNumber (@Model.Room?.RoomType)</span></p>
+                        <p class="mb-0 text-dark fw-bold fs-4">Tổng cộng: @Model.TotalAmount.ToString("N0") VNĐ</p>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold mb-4"><i class="fa-solid fa-credit-card me-2 text-warning"></i>Chọn hình thức thanh toán</h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="option-card active" onclick="selectOption(this, 100)">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0">Thanh toán 100%</h6>
+                                <span class="price-badge">Khuyên dùng</span>
+                            </div>
+                            <p class="text-muted small mb-3">Hoàn tất thanh toán toàn bộ tiền phòng một lần duy nhất.</p>
+                            <h5 class="text-dark fw-bold mb-0">@Model.TotalAmount.ToString("N0") VNĐ</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="option-card" onclick="selectOption(this, 30)">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0">Đặt cọc trước (30%)</h6>
+                            </div>
+                            <p class="text-muted small mb-3">Chỉ cần thanh toán trước 30%. Số tiền còn lại sẽ thanh toán khi nhận phòng.</p>
+                            <h5 class="text-dark fw-bold mb-0">@((Model.TotalAmount * 0.3m).ToString("N0")) VNĐ</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center text-muted small">
+                    <p><i class="fa-solid fa-circle-info me-1"></i> Bạn có thể điều chỉnh tỷ lệ đặt cọc từ 20% đến 40%</p>
+                    <input type="range" class="form-range" min="20" max="40" step="10" value="30" id="depositRange" oninput="updateRangeLabel(this.value)" style="max-width: 300px; display: none;">
+                    <div id="rangeLabel" style="display: none;">Tỷ lệ chọn: <span class="fw-bold text-warning">30%</span></div>
+                </div>
+
+                <div class="qr-section mt-5" id="qrContainer">
+                    <h6 class="fw-bold mb-3">Quét mã QR để thanh toán</h6>
+                    <img id="qrImage" src="" alt="QR Payment" class="img-fluid rounded shadow-sm mb-3" style="max-width: 250px;">
+                    <div class="alert alert-warning py-2 small mb-0">
+                        Nội dung chuyển khoản: <strong id="transferContent">DC @Model.Id</strong>
+                    </div>
+                </div>
+
+                <div class="mt-5">
+                    <button class="btn-confirm text-uppercase" id="confirmBtn" onclick="confirmPaymentSelection()">Xác nhận & Nhận mã QR</button>
+                    <a href="/" class="btn btn-link w-100 mt-3 text-muted text-decoration-none small">Quay lại trang chủ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let selectedPercentage = 100;
+        const totalAmount = @Model.TotalAmount;
+        const bookingId = @Model.Id;
+
+        function selectOption(el, percentage) {
+            document.querySelectorAll('.option-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            selectedPercentage = percentage;
+            
+            const range = document.getElementById('depositRange');
+            const label = document.getElementById('rangeLabel');
+            
+            if (percentage < 100) {
+                range.style.display = 'inline-block';
+                label.style.display = 'block';
+                selectedPercentage = parseInt(range.value);
+            } else {
+                range.style.display = 'none';
+                label.style.display = 'none';
+            }
+        }
+
+        function updateRangeLabel(val) {
+            selectedPercentage = parseInt(val);
+            document.querySelector('#rangeLabel span').innerText = val + '%';
+            
+            // Update the amount in the deposit card
+            const depositCardAmount = document.querySelector('.option-card:not(.active) h5') || document.querySelector('.option-card h5:last-child');
+            const amount = totalAmount * (val / 100);
+            document.querySelector('.option-card:last-child h5').innerText = new Intl.NumberFormat('vi-VN').format(amount) + ' VNĐ';
+        }
+
+        async function confirmPaymentSelection() {
+            try {
+                const response = await fetch('/Booking/ProcessPayment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${bookingId}&percentage=${selectedPercentage}`
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    // Show QR
+                    const amount = totalAmount * (selectedPercentage / 100);
+                    const qrUrl = `https://img.vietqr.io/image/MB-123456789-compact.png?amount=${amount}&addInfo=DC${bookingId}&accountName=LuxManage%20Resort`;
+                    
+                    document.getElementById('qrImage').src = qrUrl;
+                    document.getElementById('qrContainer').style.display = 'block';
+                    document.getElementById('confirmBtn').style.display = 'none';
+                    
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã chọn hình thức thanh toán',
+                        text: 'Vui lòng quét mã QR bên dưới để hoàn tất. Hệ thống sẽ tự động xác nhận khi nhận được tiền.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+
+                    // Start Polling for payment status
+                    startPolling();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function startPolling() {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/bookings/${bookingId}/status`);
+                    const data = await response.json();
+                    
+                    // If status is confirmed or deposit is marked as paid
+                    if (data.isPaid || data.status === 'CONFIRMED' || data.status === 'SUCCESS') {
+                        clearInterval(pollInterval);
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thanh toán thành công!',
+                            text: 'Hệ thống đã ghi nhận tiền cọc của bạn. Chúc bạn có một kỳ nghỉ tuyệt vời!',
+                            confirmButtonText: 'Về trang chủ',
+                            allowOutsideClick: false
+                        }).then(() => {
+                            window.location.href = '/';
+                        });
+                    }
+                } catch (e) {
+                    console.error("Polling error:", e);
+                }
+            }, 3000); // Check every 3 seconds
+        }
+    </script>
+</body>
+</html>

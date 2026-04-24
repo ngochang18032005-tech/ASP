@@ -1,0 +1,88 @@
+@model List<ASP.Models.Customer>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý Khách Hàng";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="page-title">Danh Sách Khách Hàng</h1>
+        <p class="text-muted">Quản lý và xem thông tin chi tiết khách hàng đăng ký trên hệ thống.</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-primary rounded-pill px-4 shadow-sm"><i class="fa-solid fa-download me-2"></i> Xuất Báo Cáo</button>
+    </div>
+</div>
+
+<div class="glass-card section-card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">ID</th>
+                    <th>Họ và Tên</th>
+                    <th>Email</th>
+                    <th>Số Điện Thoại</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-user-slash fa-3x mb-3 opacity-20"></i>
+                            <p>Chưa có khách hàng nào đăng ký.</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var customer in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">#@customer.Id</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="fa-solid fa-user"></i>
+                                    </div>
+                                    <span class="fw-semibold">@customer.FullName</span>
+                                </div>
+                            </td>
+                            <td>@customer.Email</td>
+                            <td>@customer.Phone</td>
+                            <td class="text-end">
+                                <button class="action-btn me-2" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></button>
+                                <button class="action-btn text-danger" title="Khóa tài khoản"><i class="fa-solid fa-user-lock"></i></button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+    .action-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-color);
+        transition: all 0.2s;
+    }
+    .action-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+    .action-btn.text-danger:hover {
+        background: #ef4444;
+    }
+</style>

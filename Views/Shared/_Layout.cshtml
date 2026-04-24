@@ -33,8 +33,26 @@
                         <li class="nav-item"><a class="nav-link text-white text-uppercase fw-medium" href="#promotions">Khuyến mãi</a></li>
                     </ul>
                     <div class="d-flex gap-3 align-items-center">
-                        <a asp-controller="Dashboard" asp-action="Index" class="text-white text-decoration-none" style="font-size: 0.9rem;">Admin Login</a>
-                        <button class="btn btn-warning px-4 rounded-pill fw-bold text-dark text-uppercase shadow-sm">Đặt Phòng</button>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="dropdown">
+                                <a class="text-white text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fa-solid fa-circle-user me-1"></i> @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                    <li><a class="dropdown-item py-2" href="/Customer/Profile"><i class="fa-solid fa-user-pen me-2 text-warning"></i> Thông tin cá nhân</a></li>
+                                    <li><hr class="dropdown-divider opacity-10"></li>
+                                    <li><a class="dropdown-item py-2" href="/Customer/Logout"><i class="fa-solid fa-right-from-bracket me-2 text-danger"></i> Đăng xuất</a></li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-controller="Customer" asp-action="Login" class="text-white text-decoration-none" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-user-lock me-1"></i> Đăng nhập
+                            </a>
+                        }
+                        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'}); document.getElementById('guestName').focus();" class="btn btn-warning px-4 rounded-pill fw-bold text-dark text-uppercase shadow-sm">Đặt Phòng</button>
                     </div>
                 </div>
             </div>
